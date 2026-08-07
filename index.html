@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>arXiv Daily — Agent / RL / Tool-use</title>
+    <style>
+        :root {
+            --bg: #fafafa;
+            --card-bg: #ffffff;
+            --text: #1a1a1a;
+            --text-secondary: #666;
+            --border: #e0e0e0;
+            --accent: #2563eb;
+            --accent-light: #dbeafe;
+            --tag-bg: #f0f0f0;
+            --shadow: 0 1px 3px rgba(0,0,0,0.08);
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111827;
+                --card-bg: #1f2937;
+                --text: #f1f5f9;
+                --text-secondary: #9ca3af;
+                --border: #374151;
+                --accent: #60a5fa;
+                --accent-light: #1e3a5f;
+                --tag-bg: #374151;
+                --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0 20px;
+        }
+        header h1 { font-size: 1.8rem; margin-bottom: 4px; }
+        header p { color: var(--text-secondary); font-size: 0.95rem; }
+
+        /* Date nav */
+        .date-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            margin: 20px 0 30px;
+            flex-wrap: wrap;
+        }
+        .date-nav button {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.15s;
+        }
+        .date-nav button:hover { border-color: var(--accent); color: var(--accent); }
+        .date-nav input[type="date"] {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-family: inherit;
+        }
+        .date-nav label { color: var(--text-secondary); font-size: 0.9rem; }
+
+        /* Stats */
+        .stats {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        /* Filter */
+        .filter-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        .filter-bar input {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            width: 280px;
+            font-family: inherit;
+        }
+        .filter-bar input:focus { outline: none; border-color: var(--accent); }
+
+        /* Paper cards */
+        #papers-container { display: flex; flex-direction: column; gap: 16px; }
+
+        .paper-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: var(--shadow);
+            transition: all 0.15s;
+            cursor: default;
+        }
+        .paper-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(0,0,0,0.12); }
+        .paper-card.highlight { border-left: 4px solid var(--accent); }
+
+        .paper-card .score {
+            display: inline-block;
+            background: var(--accent-light);
+            color: var(--accent);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .paper-card .title {
+            font-size: 1.05rem;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .paper-card .title a { color: inherit; text-decoration: none; }
+        .paper-card .title a:hover { color: var(--accent); }
+        .paper-card .meta {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        .paper-card .meta .cat {
+            background: var(--tag-bg);
+            padding: 1px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+        }
+        .paper-card .abstract {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .paper-card .abstract.expanded {
+            display: block;
+            -webkit-line-clamp: unset;
+        }
+        .paper-card .expand-btn {
+            background: none;
+            border: none;
+            color: var(--accent);
+            cursor: pointer;
+            font-size: 0.82rem;
+            padding: 4px 0;
+            margin-top: 4px;
+        }
+
+        /* Loading & Empty */
+        .loading, .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        .loading .spinner {
+            display: inline-block;
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        footer {
+            text-align: center;
+            padding: 40px 0 20px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>📄 arXiv Daily Papers</h1>
+    <p>Agent / Reinforcement Learning / Tool-use</p>
+</header>
+
+<div class="date-nav">
+    <button id="btn-prev" title="前一天">◀ 前一天</button>
+    <label>
+        日期:
+        <input type="date" id="date-picker" />
+    </label>
+    <button id="btn-next" title="后一天">后一天 ▶</button>
+    <button id="btn-today">📅 今天</button>
+</div>
+
+<div class="stats" id="stats"></div>
+
+<div class="filter-bar">
+    <input type="text" id="filter-input" placeholder="🔍 按关键词过滤（标题/摘要/作者）..." />
+</div>
+
+<div id="papers-container">
+    <div class="loading">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+</div>
+
+<footer>
+    Powered by <a href="https://arxiv.org" target="_blank" rel="noopener">arXiv API</a> ·
+    Updated daily via GitHub Actions ·
+    <a href="https://github.com" target="_blank" rel="noopener">Source</a>
+</footer>
+
+<!-- marked.js for Markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<script>
+(async function() {
+    const container = document.getElementById('papers-container');
+    const statsEl = document.getElementById('stats');
+    const datePicker = document.getElementById('date-picker');
+    const filterInput = document.getElementById('filter-input');
+    const PAPERS_BASE = 'papers/';
+
+    let currentDate = new Date().toISOString().slice(0, 10);
+    let allPapers = [];
+    let rawMd = '';
+
+    // --- Date helpers ---
+    function formatCN(d) {
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    }
+
+    function setDate(dateStr) {
+        currentDate = dateStr;
+        datePicker.value = dateStr;
+        loadPapers(dateStr);
+    }
+
+    datePicker.addEventListener('change', () => setDate(datePicker.value));
+    document.getElementById('btn-prev').addEventListener('click', () => {
+        const d = new Date(currentDate + 'T00:00:00');
+        d.setDate(d.getDate() - 1);
+        setDate(formatCN(d));
+    });
+    document.getElementById('btn-next').addEventListener('click', () => {
+        const d = new Date(currentDate + 'T00:00:00');
+        d.setDate(d.getDate() + 1);
+        setDate(formatCN(d));
+    });
+    document.getElementById('btn-today').addEventListener('click', () => {
+        setDate(new Date().toISOString().slice(0, 10));
+    });
+
+    // --- Parse Markdown into structured papers ---
+    function parsePapers(md) {
+        const papers = [];
+        // Split by "### N. " headers (detailed entries section)
+        const detailSection = md.split(/^## 📖 Detailed Entries$/m)[1] || '';
+        const blocks = detailSection.split(/^### (\d+)\. /m).filter(Boolean);
+
+        for (let i = 0; i < blocks.length; i += 2) {
+            const num = blocks[i];
+            let body = blocks[i+1] || '';
+
+            // Also try to extract from tables
+            const titleMatch = body.match(/^([^\n-][^\n]+)/);
+            const arxivMatch = body.match(/\*\*arXiv ID\*\*:\s*\[([^\]]+)\]/);
+            const authorsMatch = body.match(/\*\*Authors\*\*:\s*(.+)$/m);
+            const catsMatch = body.match(/\*\*Categories\*\*:\s*(.+)$/m);
+            const abstractMatch = body.match(/\*\*Abstract\*\*:\s*(.+)$/m);
+            const relevanceMatch = body.match(/\*\*Relevance\*\*:\s*(.+)$/m);
+
+            if (titleMatch) {
+                papers.push({
+                    num: parseInt(num),
+                    title: titleMatch[1].trim(),
+                    arxivId: arxivMatch ? arxivMatch[1] : '',
+                    url: arxivMatch ? `https://arxiv.org/abs/${arxivMatch[1]}` : '',
+                    authors: authorsMatch ? authorsMatch[1] : '',
+                    categories: catsMatch ? catsMatch[1].split(',').map(s=>s.trim()) : [],
+                    abstract: abstractMatch ? abstractMatch[1] : '',
+                    scoreReasons: relevanceMatch ? relevanceMatch[1] : '',
+                });
+            }
+        }
+        return papers;
+    }
+
+    function extractScores(md) {
+        // Try to extract scores from the All Papers table
+        const scores = new Map();
+        const tableSection = (md.split(/^## 📋 All Papers$/m)[1] || '').split(/^---$/m)[0] || '';
+        const rows = tableSection.split('\n').filter(l => l.startsWith('|') && !l.startsWith('| #'));
+        for (const row of rows) {
+            const cols = row.split('|').filter(Boolean).map(s=>s.trim());
+            if (cols.length >= 3) {
+                // cols[0]=number, cols[1]=score, cols[2]=title+link
+                const score = parseInt(cols[1]);
+                const linkMatch = cols[2].match(/\[([^\]]+)\]\(([^)]+)\)/);
+                if (linkMatch && !isNaN(score)) {
+                    scores.set(linkMatch[1], score);
+                }
+            }
+        }
+        return scores;
+    }
+
+    // --- Render papers ---
+    function render(filterText = '') {
+        const ft = filterText.toLowerCase().trim();
+
+        let filtered = allPapers;
+        if (ft) {
+            filtered = allPapers.filter(p =>
+                (p.title || '').toLowerCase().includes(ft) ||
+                (p.abstract || '').toLowerCase().includes(ft) ||
+                (p.authors || '').toLowerCase().includes(ft) ||
+                (p.categories || []).some(c => c.toLowerCase().includes(ft)) ||
+                (p.scoreReasons || '').toLowerCase().includes(ft)
+            );
+        }
+
+        statsEl.textContent = ft
+            ? `筛选: ${filtered.length} / ${allPapers.length} 篇`
+            : `共 ${allPapers.length} 篇` + (currentDate ? ` · ${currentDate}` : '');
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="empty"><p>📭 没有匹配的论文</p></div>';
+            return;
+        }
+
+        container.innerHTML = filtered.map(p => {
+            const isHL = (p.score || 0) >= 5;
+            return `
+            <div class="paper-card${isHL ? ' highlight' : ''}">
+                ${p.score ? `<span class="score">⭐ ${p.score}</span>` : ''}
+                <div class="title">
+                    <a href="${p.url || '#'}" target="_blank" rel="noopener">${p.title || '(No title)'}</a>
+                </div>
+                <div class="meta">
+                    ${p.authors ? `<span>👤 ${p.authors}</span>` : ''}
+                    ${p.categories.map(c => `<span class="cat">${c}</span>`).join('')}
+                    ${p.arxivId ? `<span>📄 ${p.arxivId}</span>` : ''}
+                </div>
+                <div class="abstract" id="abs-${p.num}">${p.abstract || ''}</div>
+                ${(p.abstract || '').length > 200 ? `
+                    <button class="expand-btn" onclick="
+                        const el = document.getElementById('abs-${p.num}');
+                        const btn = this;
+                        el.classList.toggle('expanded');
+                        btn.textContent = el.classList.contains('expanded') ? '收起 ▲' : '展开全文 ▼';
+                    ">展开全文 ▼</button>
+                ` : ''}
+                ${p.scoreReasons ? `<div style="font-size:0.75rem;color:var(--text-secondary);margin-top:8px;">🏷️ ${p.scoreReasons}</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    // --- Load papers for a date ---
+    async function loadPapers(dateStr) {
+        container.innerHTML = '<div class="loading"><div class="spinner"></div><p>加载中...</p></div>';
+        statsEl.textContent = '';
+
+        try {
+            const resp = await fetch(`${PAPERS_BASE}${dateStr}.md`);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            rawMd = await resp.text();
+
+            const scores = extractScores(rawMd);
+            allPapers = parsePapers(rawMd);
+            // Attach scores
+            for (const p of allPapers) {
+                p.score = scores.get(p.title) || 0;
+            }
+
+            render(filterInput.value);
+        } catch (err) {
+            console.error(err);
+            container.innerHTML = `<div class="empty">
+                <p>📭 ${dateStr} 暂无论文数据</p>
+                <p style="font-size:0.8rem;margin-top:8px;">${err.message}</p>
+            </div>`;
+            allPapers = [];
+        }
+    }
+
+    // Filter on typing
+    let filterTimer;
+    filterInput.addEventListener('input', () => {
+        clearTimeout(filterTimer);
+        filterTimer = setTimeout(() => render(filterInput.value), 250);
+    });
+
+    // Init
+    datePicker.value = currentDate;
+    await loadPapers(currentDate);
+})();
+</script>
+</body>
+</html>

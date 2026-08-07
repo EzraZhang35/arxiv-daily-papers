@@ -1,0 +1,178 @@
+# =============================================================================
+# arXiv Daily Paper Fetcher — Configuration
+# =============================================================================
+
+# --- Query Groups ----------------------------------------------------------
+# Each group: keywords (arXiv boolean syntax) + target categories + label
+
+queries:
+  # Agent + RL
+  - label: "Agent + RL (cs.AI/cs.LG/cs.MA)"
+    keywords: >
+      (
+        ("reinforcement+learning"+AND+agent)
+        +OR+
+        ("deep+RL"+AND+agent)
+        +OR+
+        ("multi-agent"+AND+"reinforcement+learning")
+      )
+    categories:
+      - cs.AI
+      - cs.LG
+      - cs.MA
+
+  # Tool-use / Function calling
+  - label: "Tool-use & Function Calling (cs.AI/cs.CL/cs.LG)"
+    keywords: >
+      (
+        "tool+use"
+        +OR+
+        "tool-use"
+        +OR+
+        "tool+calling"
+        +OR+
+        "function+calling"
+        +OR+
+        "API+calling"
+      )
+    categories:
+      - cs.AI
+      - cs.CL
+      - cs.LG
+
+  # LLM / AI Agent
+  - label: "LLM Agent (cs.AI/cs.CL)"
+    keywords: >
+      (
+        "LLM+agent"
+        +OR+
+        "AI+agent"
+        +OR+
+        "autonomous+agent"
+        +OR+
+        "language+model"+AND+agent
+        +OR+
+        "large+language+model"+AND+task
+      )
+    categories:
+      - cs.AI
+      - cs.CL
+
+  # Reasoning + Planning with Agent
+  - label: "Reasoning/Planning + Agent (cs.AI/cs.LG/cs.CL)"
+    keywords: >
+      (
+        (reasoning+AND+agent)
+        +OR+
+        (planning+AND+agent)
+        +OR+
+        ("chain+of+thought"+AND+agent)
+        +OR+
+        (decision-making+AND+agent)
+      )
+    categories:
+      - cs.AI
+      - cs.LG
+      - cs.CL
+
+# --- Scoring Rules ---------------------------------------------------------
+# Positive signals. field: "title" (full weight) or "abstract" (half weight)
+
+score_rules:
+  # Highest priority: core topics in title
+  - keywords:
+      - "reinforcement learning"
+      - "deep reinforcement learning"
+      - "RL agent"
+    weight: 3
+    field: title
+
+  - keywords:
+      - "tool use"
+      - "tool-use"
+      - "tool calling"
+      - "function calling"
+      - "tool learning"
+    weight: 3
+    field: title
+
+  - keywords:
+      - "LLM agent"
+      - "AI agent"
+      - "autonomous agent"
+      - "language agent"
+    weight: 3
+    field: title
+
+  # Medium priority: related topics in title
+  - keywords:
+      - "agent"
+      - "multi-agent"
+      - "agentic"
+    weight: 2
+    field: title
+
+  - keywords:
+      - "reasoning"
+      - "planning"
+      - "decision making"
+      - "chain-of-thought"
+    weight: 2
+    field: title
+
+  - keywords:
+      - "large language model"
+      - "LLM"
+      - "foundation model"
+      - "GPT"
+    weight: 2
+    field: title
+
+  # Lower priority: abstract matches (weights halved automatically)
+  - keywords:
+      - "reinforcement learning"
+      - "tool use"
+      - "agent"
+      - "reasoning"
+      - "planning"
+    weight: 2
+    field: abstract
+
+  - keywords:
+      - "reward"
+      - "policy gradient"
+      - "PPO"
+      - "Q-learning"
+      - "actor-critic"
+    weight: 1
+    field: title
+
+# --- Exclusion Rules -------------------------------------------------------
+# Papers matching any of these are filtered OUT
+
+exclude_rules:
+  # Biological / Chemical agents
+  - keywords:
+      - "molecular agent"
+      - "drug agent"
+      - "therapeutic agent"
+      - "anticancer"
+      - "antibacterial"
+      - "cell agent"
+      - "protein agent"
+      - "chemical agent"
+      - "biological agent"
+    field: title
+
+  # Non-CS domains
+  - keywords:
+      - "economic agent"
+      - "trading agent"
+    field: title
+
+  # Hardware / IoT (unless involves learning)
+  - keywords:
+      - "wireless sensor"
+      - "IoT device"
+      - "embedded agent"
+    field: title
