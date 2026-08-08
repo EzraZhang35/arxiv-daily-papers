@@ -9,13 +9,15 @@ on:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # 允许 push 回仓库
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.11'
 
@@ -26,7 +28,7 @@ jobs:
         run: python fetch_papers.py --days 3
 
       - name: Auto-commit changes
-        uses: stefanzweifel/git-auto-commit-action@v5
+        uses: stefanzweifel/git-auto-commit-action@v7
         with:
           commit_message: "📄 Add papers for $(date +%Y-%m-%d)"
           file_pattern: 'papers/*.md README.md'
