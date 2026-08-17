@@ -1,28 +1,15 @@
 # =============================================================================
 # arXiv Daily Paper Fetcher — Configuration
 # =============================================================================
+# 调研方向（2026-08 起）: 工具调用 (Tool Calling / Tool Use) + OPD (On-Policy
+# Distillation，含 LLM 蒸馏与智能体蒸馏)
 
 # --- Query Groups ----------------------------------------------------------
 # Each group: keywords (arXiv boolean syntax) + target categories + label
 
 queries:
-  # Agent + RL
-  - label: "Agent + RL (cs.AI/cs.LG/cs.MA)"
-    keywords: >
-      (
-        ("reinforcement+learning"+AND+agent)
-        +OR+
-        ("deep+RL"+AND+agent)
-        +OR+
-        ("multi-agent"+AND+"reinforcement+learning")
-      )
-    categories:
-      - cs.AI
-      - cs.LG
-      - cs.MA
-
-  # Tool-use / Function calling
-  - label: "Tool-use & Function Calling (cs.AI/cs.CL/cs.LG)"
+  # Tool calling / function calling
+  - label: "Tool Calling & Tool Use (cs.AI/cs.CL/cs.LG)"
     keywords: >
       (
         "tool+use"
@@ -34,46 +21,47 @@ queries:
         "function+calling"
         +OR+
         "API+calling"
+        +OR+
+        "tool+learning"
+        +OR+
+        "tool+selection"
+        +OR+
+        "tool+creation"
       )
     categories:
       - cs.AI
       - cs.CL
       - cs.LG
 
-  # LLM / AI Agent
-  - label: "LLM Agent (cs.AI/cs.CL)"
+  # On-policy / knowledge distillation for LLMs
+  - label: "On-Policy Distillation & LLM Distillation (cs.CL/cs.LG/cs.AI)"
     keywords: >
       (
-        "LLM+agent"
+        "on-policy+distillation"
         +OR+
-        "AI+agent"
+        ("knowledge+distillation"+AND+("LLM"+OR+"large+language+model"))
         +OR+
-        "autonomous+agent"
+        ("distillation"+AND+("LLM"+OR+"language+model"))
         +OR+
-        "language+model"+AND+agent
-        +OR+
-        "large+language+model"+AND+task
+        ("distilling"+AND+("LLM"+OR+"large+language+model"))
       )
     categories:
-      - cs.AI
       - cs.CL
-
-  # Reasoning + Planning with Agent
-  - label: "Reasoning/Planning + Agent (cs.AI/cs.LG/cs.CL)"
-    keywords: >
-      (
-        (reasoning+AND+agent)
-        +OR+
-        (planning+AND+agent)
-        +OR+
-        ("chain+of+thought"+AND+agent)
-        +OR+
-        (decision-making+AND+agent)
-      )
-    categories:
-      - cs.AI
       - cs.LG
+      - cs.AI
+
+  # Distillation × agent / multi-turn (OPD for agents, e.g. Guided-OPD)
+  - label: "Agent Distillation (distill × agent/multi-turn/tool)"
+    keywords: >
+      (
+        ("distillation"+OR+"distilling")
+        +AND+
+        ("multi-turn"+OR+"agentic"+OR+"agent"+OR+"tool+use")
+      )
+    categories:
+      - cs.AI
       - cs.CL
+      - cs.LG
 
 # --- Scoring Rules ---------------------------------------------------------
 # Positive signals. field: "title" (full weight) or "abstract" (half weight)
@@ -81,42 +69,34 @@ queries:
 score_rules:
   # Highest priority: core topics in title
   - keywords:
-      - "reinforcement learning"
-      - "deep reinforcement learning"
-      - "RL agent"
-    weight: 3
-    field: title
-
-  - keywords:
       - "tool use"
       - "tool-use"
       - "tool calling"
       - "function calling"
       - "tool learning"
+      - "tool selection"
+      - "tool creation"
     weight: 3
     field: title
 
   - keywords:
-      - "LLM agent"
-      - "AI agent"
-      - "autonomous agent"
-      - "language agent"
+      - "on-policy distillation"
     weight: 3
     field: title
 
   # Medium priority: related topics in title
   - keywords:
-      - "agent"
-      - "multi-agent"
-      - "agentic"
+      - "distillation"
+      - "distilling"
+      - "knowledge distillation"
     weight: 2
     field: title
 
   - keywords:
-      - "reasoning"
-      - "planning"
-      - "decision making"
-      - "chain-of-thought"
+      - "agent"
+      - "agentic"
+      - "multi-turn"
+      - "LLM agent"
     weight: 2
     field: title
 
@@ -124,26 +104,25 @@ score_rules:
       - "large language model"
       - "LLM"
       - "foundation model"
-      - "GPT"
     weight: 2
     field: title
 
   # Lower priority: abstract matches (weights halved automatically)
   - keywords:
-      - "reinforcement learning"
       - "tool use"
+      - "tool calling"
+      - "function calling"
+      - "on-policy distillation"
+      - "distillation"
       - "agent"
-      - "reasoning"
-      - "planning"
+      - "multi-turn"
     weight: 2
     field: abstract
 
   - keywords:
-      - "reward"
-      - "policy gradient"
-      - "PPO"
-      - "Q-learning"
-      - "actor-critic"
+      - "on-policy"
+      - "API"
+      - "function call"
     weight: 1
     field: title
 
@@ -170,9 +149,17 @@ exclude_rules:
       - "trading agent"
     field: title
 
-  # Hardware / IoT (unless involves learning)
+  # Hardware / IoT
   - keywords:
       - "wireless sensor"
       - "IoT device"
       - "embedded agent"
+    field: title
+
+  # CV-domain distillation noise (query leakage via abstract mentioning LLM)
+  - keywords:
+      - "semantic segmentation"
+      - "object detection"
+      - "image classification"
+      - "point cloud"
     field: title

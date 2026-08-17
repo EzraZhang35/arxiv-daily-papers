@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 arXiv Daily Paper Fetcher
-Fetches latest papers on Agent, RL, and Tool-use from arXiv,
+Fetches latest papers on Tool Calling and On-Policy Distillation from arXiv,
 scores by relevance, and generates daily Markdown digests.
 """
 
@@ -185,7 +185,7 @@ def generate_daily_md(papers: list[Paper], date_str: str) -> str:
     lines = [
         f"# 📄 arXiv Papers — {date_str}",
         "",
-        f"**Agent / RL / Tool-use** | 共 {len(papers)} 篇 | 更新时间: {date_str}",
+        f"**Tool-use / Distillation (OPD)** | 共 {len(papers)} 篇 | 更新时间: {date_str}",
         "",
         "---",
         "",
@@ -244,9 +244,9 @@ def update_readme_index(papers_dir: Path, today_str: str) -> None:
     md_files = sorted(papers_dir.glob("*.md"), reverse=True)
 
     lines = [
-        "# 📄 arXiv Daily Papers — Agent / RL / Tool-use",
+        "# 📄 arXiv Daily Papers — Tool-use / On-Policy Distillation",
         "",
-        "每天自动从 arXiv 爬取 Agent、Reinforcement Learning、Tool-use 方向的最新论文，精选 10-20 篇。",
+        "每天自动从 arXiv 爬取 Tool Calling 与 On-Policy Distillation（含 LLM 蒸馏、智能体蒸馏）方向的最新论文，精选 10-20 篇。",
         "",
         "> 🔄 每日 UTC 22:00 自动更新（北京时间次日 06:00）",
         "",
@@ -269,9 +269,8 @@ def update_readme_index(papers_dir: Path, today_str: str) -> None:
     lines.append("")
     lines.append("| 主题 | 关键词 |")
     lines.append("|------|--------|")
-    lines.append('| **Agent** | "reinforcement learning" + agent, "LLM agent", "AI agent", "autonomous agent" |')
-    lines.append('| **Tool-use** | "tool use", "tool-use", "tool calling", "function calling" |')
-    lines.append('| **Reasoning** | "reasoning" + agent, "planning" + agent |')
+    lines.append('| **Tool Calling** | "tool use", "tool-use", "tool calling", "function calling", "tool learning" |')
+    lines.append('| **On-Policy Distillation** | "on-policy distillation", "knowledge distillation" + LLM, "distillation" + agent/multi-turn |')
 
     with open(README_PATH, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")

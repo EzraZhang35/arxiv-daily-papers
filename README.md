@@ -1,15 +1,16 @@
-# 📄 arXiv Daily Papers — Agent / RL / Tool-use
+# 📄 arXiv Daily Papers — Tool-use / On-Policy Distillation
 
-每天自动从 arXiv 爬取 Agent、Reinforcement Learning、Tool-use 方向的最新论文，精选 10-20 篇。
+每天自动从 arXiv 爬取 Tool Calling 与 On-Policy Distillation（含 LLM 蒸馏、智能体蒸馏）方向的最新论文，精选 10-20 篇。
 
 > 🔄 每日 UTC 22:00 自动更新（北京时间次日 06:00）
 
-**最新**: [2026-08-16](papers/2026-08-16.md)
+**最新**: [2026-08-17](papers/2026-08-17.md)
 
 ## 📅 论文日报索引
 
 | 日期 | 论文数 |
 |------|--------|
+| [2026-08-17](papers/2026-08-17.md) | 14 |
 | [2026-08-16](papers/2026-08-16.md) | 0 |
 | [2026-08-15](papers/2026-08-15.md) | 18 |
 | [2026-08-14](papers/2026-08-14.md) | 18 |
@@ -26,6 +27,5 @@
 
 | 主题 | 关键词 |
 |------|--------|
-| **Agent** | "reinforcement learning" + agent, "LLM agent", "AI agent", "autonomous agent" |
-| **Tool-use** | "tool use", "tool-use", "tool calling", "function calling" |
-| **Reasoning** | "reasoning" + agent, "planning" + agent |
+| **Tool Calling** | "tool use", "tool-use", "tool calling", "function calling", "tool learning" |
+| **On-Policy Distillation** | "on-policy distillation", "knowledge distillation" + LLM, "distillation" + agent/multi-turn |
